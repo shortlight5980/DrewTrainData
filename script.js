@@ -185,9 +185,57 @@ function calculateBrushSize(currentMousePos) {
     
     // 根据速度调整画笔大小
     // 速度越快，画笔越小；速度越慢，画笔越大
+    // 扩大速度调整范围，使画笔大小在更宽的速度范围内变化
     const minSize = 1;
     const maxSize = Math.max(10, appState.brushSize * 2);
-    let adjustedSize = maxSize - (speed * 5);
+    
+    // 计算速度的有效范围
+    const minSpeed = 0.5; // 最小有效速度
+    const maxSpeed = 20.0; // 最大有效速度
+    
+    // 将速度限制在有效范围内
+    const clampedSpeed = Math.max(minSpeed, Math.min(maxSpeed, speed));
+    
+    // 根据线性映射调整画笔大小：速度从minSpeed到maxSpeed，大小从maxSize到minSize
+    let adjustedSize = maxSize - ((clampedSpeed - minSpeed) / (maxSpeed - minSpeed)) * (maxSize - minSize);
+    adjustedSize = Math.max(minSize, Math.min(maxSize, adjustedSize));
+    
+    return Math.round(adjustedSize);
+}
+
+// 为指定点计算画笔大小（用于连线中的中间点）
+function calculateBrushSizeForPoint(pointData) {
+    if (!appState.speedAdjust) {
+        return appState.brushSize;
+    }
+    
+    const { x, y, lastX, lastY, lastTime, currentTime } = pointData;
+    const timeDiff = currentTime - lastTime;
+    if (timeDiff === 0) return appState.brushSize;
+    
+    const distance = Math.sqrt(
+        Math.pow(x - lastX, 2) +
+        Math.pow(y - lastY, 2)
+    );
+    
+    // 计算速度 (像素/毫秒)
+    const speed = distance / timeDiff;
+    
+    // 根据速度调整画笔大小
+    // 速度越快，画笔越小；速度越慢，画笔越大
+    // 扩大速度调整范围，使画笔大小在更宽的速度范围内变化
+    const minSize = 1;
+    const maxSize = Math.max(10, appState.brushSize * 2);
+    
+    // 计算速度的有效范围
+    const minSpeed = 0.5; // 最小有效速度
+    const maxSpeed = 20.0; // 最大有效速度
+    
+    // 将速度限制在有效范围内
+    const clampedSpeed = Math.max(minSpeed, Math.min(maxSpeed, speed));
+    
+    // 根据线性映射调整画笔大小：速度从minSpeed到maxSpeed，大小从maxSize到minSize
+    let adjustedSize = maxSize - ((clampedSpeed - minSpeed) / (maxSpeed - minSpeed)) * (maxSize - minSize);
     adjustedSize = Math.max(minSize, Math.min(maxSize, adjustedSize));
     
     return Math.round(adjustedSize);
@@ -225,15 +273,74 @@ function drawCell(e) {
         y: e.clientY - rect.top
     };
     
-    // 计算当前画笔大小
-    const currentBrushSize = calculateBrushSize(currentMousePos);
+    // 如果有上一次的鼠标位置，绘制当前位置和上一次位置之间的连线
+    if (appState.lastMousePos) {
+        drawLine(appState.lastMousePos, currentMousePos);
+    } else {
+        // 否则只绘制当前位置
+        const currentBrushSize = calculateBrushSize(currentMousePos);
+        drawCircle(currentMousePos, currentBrushSize);
+    }
     
+    // 更新上一次鼠标位置和时间
+    appState.lastMousePos = currentMousePos;
+    appState.lastMouseTime = Date.now();
+}
+
+// 绘制两个点之间的连线
+function drawLine(startPos, endPos) {
+    // 计算两点之间的距离
+    const dx = endPos.x - startPos.x;
+    const dy = endPos.y - startPos.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // 计算两点之间的时间差
+    const now = Date.now();
+    const timeDiff = now - appState.lastMouseTime;
+    
+    // 计算步长（确保绘制流畅）
+    const step = Math.max(1, Math.floor(appState.brushSize / 2));
+    
+    // 计算总步数
+    const steps = Math.ceil(distance / step);
+    
+    // 绘制每一步的点
+    for (let i = 0; i <= steps; i++) {
+        // 计算当前步的位置
+        const t = i / steps;
+        const x = startPos.x + dx * t;
+        const y = startPos.y + dy * t;
+        
+        // 计算当前点的速度
+        const pointDistance = distance * t;
+        const pointTimeDiff = timeDiff * t;
+        
+        // 创建一个包含该点位置和时间戳的对象，用于计算画笔大小
+        const pointData = {
+            x: x,
+            y: y,
+            lastX: startPos.x,
+            lastY: startPos.y,
+            lastTime: appState.lastMouseTime,
+            currentTime: appState.lastMouseTime + pointTimeDiff
+        };
+        
+        // 计算该点的画笔大小
+        const pointBrushSize = calculateBrushSizeForPoint(pointData);
+        
+        // 绘制该点
+        drawCircle({ x, y }, pointBrushSize);
+    }
+}
+
+// 绘制圆形区域
+function drawCircle(pos, brushSize) {
     // 计算对应的网格坐标
-    const gridX = Math.floor(currentMousePos.x / appState.cellSize);
-    const gridY = Math.floor(currentMousePos.y / appState.cellSize);
+    const gridX = Math.floor(pos.x / appState.cellSize);
+    const gridY = Math.floor(pos.y / appState.cellSize);
     
     // 绘制圆形区域
-    const radius = currentBrushSize / 2;
+    const radius = brushSize / 2;
     
     // 计算需要绘制的网格范围
     const minX = Math.max(0, Math.floor(gridX - radius));
@@ -253,10 +360,6 @@ function drawCell(e) {
             }
         }
     }
-    
-    // 更新上一次鼠标位置和时间
-    appState.lastMousePos = currentMousePos;
-    appState.lastMouseTime = Date.now();
 }
 
 // 保存到图片夹
@@ -351,9 +454,38 @@ function renderGallery() {
             });
         });
         
-        item.appendChild(thumbCanvas);
+        // 创建容器用于包裹画布和删除按钮
+        const canvasContainer = document.createElement('div');
+        canvasContainer.className = 'canvas-container';
+        
+        // 添加缩略图画布
+        canvasContainer.appendChild(thumbCanvas);
+        
+        // 添加新的删除按钮（垃圾桶图标）
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'trash-btn';
+        deleteBtn.innerHTML = '🗑️'; // 垃圾桶图标
+        deleteBtn.title = '删除图片';
+        deleteBtn.onclick = () => deleteFromGallery(index);
+        
+        canvasContainer.appendChild(deleteBtn);
+        item.appendChild(canvasContainer);
         container.appendChild(item);
     });
+}
+
+// 从图片夹中删除图片
+function deleteFromGallery(index) {
+    if (confirm('确定要删除这张图片吗？')) {
+        // 从数组中删除指定索引的图片
+        appState.imageGallery.splice(index, 1);
+        
+        // 保存到本地存储
+        saveToStorage();
+        
+        // 重新渲染图片夹
+        renderGallery();
+    }
 }
 
 // 本地存储实现
