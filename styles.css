@@ -10,12 +10,14 @@ body {
     background-color: #f5f5f5;
     color: #333;
     line-height: 1.6;
+    font-size: 16px;
 }
 
 .container {
+    width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 10px;
 }
 
 header {
@@ -39,18 +41,22 @@ main {
 /* 尺寸选择区样式 */
 .size-selection {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
 }
 
 .size-selection label {
     font-weight: bold;
+    min-width: 70px;
 }
 
 .size-selection select, .size-selection input {
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
+    flex: 1;
+    min-width: 60px;
 }
 
 #applySizeBtn {
@@ -60,6 +66,8 @@ main {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    flex: 1;
+    min-width: 80px;
 }
 
 #applySizeBtn:hover {
@@ -71,31 +79,39 @@ main {
     display: flex;
     justify-content: center;
     background-color: white;
-    padding: 20px;
+    padding: 10px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-width: 100%;
 }
 
 #drawingCanvas {
     border: 1px solid #ddd;
     background-color: white;
     cursor: crosshair;
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
 
 /* 操作控制区样式 */
 .controls {
     display: flex;
-    gap: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
     justify-content: center;
 }
 
 .controls button {
-    padding: 10px 20px;
+    padding: 10px 15px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
+    flex: 1;
+    min-width: 120px;
 }
 
 #saveBtn {
@@ -120,26 +136,27 @@ main {
 /* 图片夹区样式 */
 .image-gallery {
     background-color: white;
-    padding: 15px;
+    padding: 10px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .image-gallery h3 {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 #galleryContainer {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    max-height: 400px;
+    max-height: 300px;
     overflow-y: auto;
+    justify-content: center;
 }
 
 .gallery-item {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     border: 1px solid #ddd;
     border-radius: 4px;
     display: flex;
@@ -156,32 +173,35 @@ main {
 /* 导出区样式 */
 .export-section {
     background-color: white;
-    padding: 15px;
+    padding: 10px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
 .export-section h3 {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .export-options {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     display: flex;
-    justify-content: center;
-    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
 #exportBtn {
-    padding: 10px 20px;
+    padding: 10px 15px;
     background-color: #9C27B0;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
+    width: 100%;
+    max-width: 200px;
 }
 
 #exportBtn:hover {
@@ -194,7 +214,7 @@ main {
 }
 
 .brush-settings h3 {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .brush-thickness {
@@ -205,7 +225,9 @@ main {
 }
 
 .brush-thickness input[type="range"] {
-    width: 200px;
+    width: 100%;
+    max-width: 200px;
+    flex: 1;
 }
 
 .brush-thickness span {
@@ -226,8 +248,8 @@ main {
 
 /* TXT导出选项样式 */
 .txt-export-options {
-    margin-top: 15px;
-    padding: 15px;
+    margin-top: 10px;
+    padding: 10px;
     background-color: #f9f9f9;
     border-radius: 4px;
     display: flex;
@@ -237,14 +259,37 @@ main {
 
 .notice{
     background-color: white;
-    padding: 15px;
-    padding-bottom: 25px;
+    padding: 10px;
+    padding-bottom: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-    font-size: 20px;
+    margin-bottom: 10px;
+    font-size: 16px;
 }
 
 .notice h1,p{
-    margin-left: 20px;
+    margin-left: 10px;
+    font-size: 1em;
+}
+
+/* 响应式设计优化 */
+@media (max-width: 768px) {
+    .settings {
+        padding: 10px;
+    }
+    
+    .size-selection, .brush-thickness {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .size-selection label, .brush-thickness label {
+        margin-bottom: 5px;
+        min-width: auto;
+    }
+    
+    .export-options {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
