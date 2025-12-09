@@ -127,7 +127,9 @@ function applyNewSize(width, height) {
             // 恢复原来的选择
             const sizeSelect = document.getElementById('sizeSelect');
             sizeSelect.value = `${appState.currentImageSize.width}x${appState.currentImageSize.height}`;
-            handleSizeChange();
+            // 显示/隐藏自定义尺寸输入框
+            const customSize = document.getElementById('customSize');
+            customSize.style.display = sizeSelect.value === 'custom' ? 'inline-block' : 'none';
             return;
         }
         
