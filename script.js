@@ -30,13 +30,26 @@ function init() {
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', init);
 
+// 防止页面缩放和滚动影响绘图体验
+document.addEventListener('touchmove', function(e) {
+    // 只在触摸发生在Canvas上时防止默认行为
+    if (e.target === document.getElementById('drawingCanvas')) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
 // Canvas初始化
 function initCanvas() {
     const canvas = document.getElementById('drawingCanvas');
     const ctx = canvas.getContext('2d');
     
-    // 设置Canvas大小
-    const maxCanvasSize = 600;
+    // 设置Canvas大小，根据屏幕尺寸动态调整
+    const maxCanvasSize = Math.min(
+        window.innerWidth * 0.9,
+        window.innerHeight * 0.8,
+        600
+    );
+    
     const { width, height } = appState.currentImageSize;
     
     // 计算单元格大小
@@ -56,6 +69,11 @@ function initCanvas() {
     appState.currentCanvas = createEmptyCanvas(width, height);
 }
 
+// 窗口大小改变时重新调整Canvas
+window.addEventListener('resize', function() {
+    initCanvas();
+});
+
 // 事件监听器绑定
 function bindEventListeners() {
     // 尺寸选择事件
@@ -68,6 +86,12 @@ function bindEventListeners() {
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
     canvas.addEventListener('mouseleave', handleMouseUp);
+    
+    // 触摸事件支持
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
+    canvas.addEventListener('touchend', handleTouchEnd);
+    canvas.addEventListener('touchcancel', handleTouchEnd);
     
     // 控制按钮事件
     document.getElementById('saveBtn').addEventListener('click', saveToGallery);
@@ -182,6 +206,65 @@ function handleMouseMove(e) {
 }
 
 function handleMouseUp() {
+    appState.isDrawing = false;
+    appState.lastMousePos = null;
+}
+
+// 触摸事件处理函数
+function handleTouchStart(e) {
+    // 防止默认触摸行为（如缩放、滚动）
+    e.preventDefault();
+    
+    appState.isDrawing = true;
+    const rect = document.getElementById('drawingCanvas').getBoundingClientRect();
+    const touch = e.touches[0];
+    
+    // 直接使用触摸坐标，不创建模拟事件
+    const currentMousePos = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+    };
+    
+    appState.lastMousePos = currentMousePos;
+    
+    // 如果有上一次的鼠标位置，绘制当前位置和上一次位置之间的连线
+    if (appState.lastMousePos) {
+        drawLine(appState.lastMousePos, currentMousePos);
+    } else {
+        // 否则只绘制当前位置
+        drawCircle(currentMousePos, appState.brushSize);
+    }
+}
+
+function handleTouchMove(e) {
+    // 防止默认触摸行为（如缩放、滚动）
+    e.preventDefault();
+    
+    if (appState.isDrawing) {
+        const rect = document.getElementById('drawingCanvas').getBoundingClientRect();
+        const touch = e.touches[0];
+        
+        // 直接使用触摸坐标，不创建模拟事件
+        const currentMousePos = {
+            x: touch.clientX - rect.left,
+            y: touch.clientY - rect.top
+        };
+        
+        // 如果有上一次的鼠标位置，绘制当前位置和上一次位置之间的连线
+        if (appState.lastMousePos) {
+            drawLine(appState.lastMousePos, currentMousePos);
+        } else {
+            // 否则只绘制当前位置
+            drawCircle(currentMousePos, appState.brushSize);
+        }
+        
+        // 更新上一次鼠标位置
+        appState.lastMousePos = currentMousePos;
+    }
+}
+
+function handleTouchEnd(e) {
+    e.preventDefault();
     appState.isDrawing = false;
     appState.lastMousePos = null;
 }
