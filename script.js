@@ -1,6 +1,6 @@
 // 应用状态
 const appState = {
-    currentImageSize: { width: 32, height: 32 },
+    currentImageSize: { width: 64, height: 64 },
     isDrawing: false,
     currentCanvas: null,
     imageGallery: [],
@@ -16,6 +16,9 @@ const STORAGE_KEY = 'dtd-workspace';
 function init() {
     // 加载本地存储数据
     loadFromStorage();
+
+    //初始化尺寸选择框
+    initSizeSelect();
     
     // 初始化Canvas
     initCanvas();
@@ -38,6 +41,26 @@ document.addEventListener('touchmove', function(e) {
     }
 }, { passive: false });
 
+//初始化尺寸选择框
+function initSizeSelect() {
+    const sizeSelect = document.getElementById('sizeSelect');
+    const customSize = document.getElementById('customSize');
+    const widthInput = document.getElementById('widthInput');
+    const heightInput = document.getElementById('heightInput');
+    const { width, height } = appState.currentImageSize;
+    if(width === height){
+        if(width === 16 || width === 32 || width === 64 || width === 128){
+            sizeSelect.value = appState.currentImageSize.height+"x"+appState.currentImageSize.width;
+            return;
+        }
+    }
+    customSize.style.display = 'inline-block';
+    sizeSelect.value = "custom";
+    widthInput.value = width;
+    heightInput.value = height;
+    
+}
+
 // Canvas初始化
 function initCanvas() {
     const canvas = document.getElementById('drawingCanvas');
@@ -45,12 +68,13 @@ function initCanvas() {
     
     // 设置Canvas大小，根据屏幕尺寸动态调整
     const maxCanvasSize = Math.min(
-        window.innerWidth * 0.9,
-        window.innerHeight * 0.8,
+        window.innerWidth * 0.93,
+        window.innerHeight * 0.87,
         600
     );
     
     const { width, height } = appState.currentImageSize;
+    // console.log("width:",width,",height:",height)
     
     // 计算单元格大小
     appState.cellSize = Math.min(
@@ -167,6 +191,7 @@ function applyNewSize(width, height) {
     appState.currentImageSize = { width, height };
     initCanvas();
     resetCanvas();
+    saveToStorage();
 }
 
 // 鼠标事件处理
@@ -290,51 +315,6 @@ function drawCell(e) {
     appState.lastMousePos = currentMousePos;
 }
 
-// // 绘制两个点之间的连线
-// function drawLine(startPos, endPos) {
-//     // 计算两点之间的距离
-//     const dx = endPos.x - startPos.x;
-//     const dy = endPos.y - startPos.y;
-//     const distance = Math.sqrt(dx * dx + dy * dy);
-    
-//     // 计算两点之间的时间差
-//     const now = Date.now();
-//     const timeDiff = now - appState.lastMouseTime;
-    
-//     // 计算步长（确保绘制流畅）
-//     const step = Math.max(1, Math.floor(appState.brushSize / 2));
-    
-//     // 计算总步数
-//     const steps = Math.ceil(distance / step);
-    
-//     // 绘制每一步的点
-//     for (let i = 0; i <= steps; i++) {
-//         // 计算当前步的位置
-//         const t = i / steps;
-//         const x = startPos.x + dx * t;
-//         const y = startPos.y + dy * t;
-        
-//         // 计算当前点的速度
-//         const pointDistance = distance * t;
-//         const pointTimeDiff = timeDiff * t;
-        
-//         // 创建一个包含该点位置和时间戳的对象，用于计算画笔大小
-//         const pointData = {
-//             x: x,
-//             y: y,
-//             lastX: startPos.x,
-//             lastY: startPos.y,
-//             lastTime: appState.lastMouseTime,
-//             currentTime: appState.lastMouseTime + pointTimeDiff
-//         };
-        
-//         // 计算该点的画笔大小
-//         const pointBrushSize = calculateBrushSizeForPoint(pointData);
-        
-//         // 绘制该点
-//         drawCircle({ x, y }, pointBrushSize);
-//     }
-// }
 
 function drawLine(startPos, endPos) {
     const dx = endPos.x - startPos.x;
@@ -510,6 +490,7 @@ function deleteFromGallery(index) {
 
 // 本地存储实现
 function saveToStorage() {
+    console.log("saveToStorage");
     const data = {
         imageGallery: appState.imageGallery,
         currentImageSize: appState.currentImageSize,
@@ -524,6 +505,7 @@ function loadFromStorage() {
     if (storedData) {
         const data = JSON.parse(storedData);
         appState.imageGallery = data.imageGallery || [];
+        console.log("currentImageSize:",data.currentImageSize)
         appState.currentImageSize = data.currentImageSize || { width: 32, height: 32 };
     }
 }
