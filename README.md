@@ -2,6 +2,9 @@
 
 DTD(DrawTrainData)是一个用于创建手绘图像(二维单通道)数据集的Web应用，允许用户通过简单的手绘方式生成用于AI训练的图像数据，并支持多种格式导出。
 
+## 在线体验
+https://shortlight5980.github.io/DrawTrainData/
+
 ## 使用方法
 
 1. 打开`index.html`文件
